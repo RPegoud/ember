@@ -4,18 +4,21 @@
 
 1. Llama implementation
     - [x] RMSNorm
-    - [ ] RoPE
+    - [x] RoPE
     - [x] GQA
+    - [x] MLA
     - [x] SwiGLU
     - [ ] (optional) KV cache
-    - [ ] Full Llama
+    - [ ] (optional) Lightning indexer
+    - [ ] Full LLM
     - [ ] Test on TinyStories
     - [ ] Reimplement components in Triton
 
-2. Diffusion
-    - DDPM
-    - Flow-matching
-    - Benchmark on CIFAR-10, CelebA-HQ
-
-3. Utilities
+2. Utilities
+    - [ ] PyTorch Lightning
     - [ ] Add FLOPs wrapper
+
+3. Diffusion
+    - [ ] DDPM
+    - [ ] Flow-matching
+    - [ ] Benchmark on CIFAR-10, CelebA-HQ

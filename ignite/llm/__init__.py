@@ -1,3 +1,6 @@
-from .modules import GroupedQueryAttn, RMSNorm, RoPE, SwiGLU
+from .attention import GroupedQueryAttn, MultiHeadLatentAttn
+from .rmsnorm import RMSNorm
+from .rope import RoPE
+from .swiglu import SwiGLU
 
-__all__ = ["RMSNorm", "RoPE", "SwiGLU", "GroupedQueryAttn"]
+__all__ = ["RMSNorm", "RoPE", "SwiGLU", "GroupedQueryAttn", "MultiHeadLatentAttn"]
