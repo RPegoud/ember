@@ -26,7 +26,7 @@ class MultiHeadLatentAttn(nn.Module):
         latent_dim: int,
         pos_dim: int,
         n_heads: int,
-        rope_theta: Optional[int] = None,
+        rope_theta: Optional[int] = 50_000,
         *args,
         **kwargs,
     ):
@@ -53,13 +53,6 @@ class MultiHeadLatentAttn(nn.Module):
         self.o_proj = nn.Linear(model_dim, model_dim)
 
         self.rope = RoPE(dim=self.pos_head_dim, base=rope_theta)
-
-        self.reset_parameters()
-
-    def reset_parameters(self) -> None:
-        for p in self.parameters():
-            if p.dim() > 1:
-                init.xavier_uniform_(p)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Latent projections

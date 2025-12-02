@@ -1,12 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.nn.init as init
 from einops import rearrange
 
 
 class GroupedQueryAttn(nn.Module):
-    # TODO: add masking
     """
     Grouped Query Attention.
 
@@ -22,10 +20,8 @@ class GroupedQueryAttn(nn.Module):
         model_dim: int,
         n_query_heads: int,
         n_query_groups: int,
-        *args,
-        **kwargs,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__()
         assert (
             model_dim % n_query_heads == 0
         ), f"{model_dim=} is not divisible by {n_query_heads=}"
@@ -44,20 +40,12 @@ class GroupedQueryAttn(nn.Module):
         self.fused_qkv = nn.Linear(model_dim, model_dim + self.kv_head_dim * 2)
         self.out_proj = nn.Linear(model_dim, model_dim)
 
-        self.reset_parameters()
-
-    def reset_parameters(self) -> None:
-        for p in self.parameters():
-            if p.dim() > 1:
-                init.xavier_uniform_(p)
-
-    @staticmethod
-    def duplicate_heads(x: torch.Tensor) -> torch.Tensor:
+    def duplicate_heads(self, x: torch.Tensor) -> torch.Tensor:
         """
         Creates duplicate views of shared k/v heads to align
         with queries shape. The created views hold no space in memory.
         """
-        x = x.unsqueeze(2).expand(-1, -1, 2, -1, -1)
+        x = x.unsqueeze(2).expand(-1, -1, self.kv_heads_per_q_head, -1, -1)
         x = x.reshape(x.shape[0], -1, *x.shape[3:])
         return x
 
@@ -70,8 +58,10 @@ class GroupedQueryAttn(nn.Module):
 
         # split q, k, v in different heads
         q = rearrange(q, "B S (NH HD) -> B NH S HD", NH=self.n_query_heads)
-        k = rearrange(k, "B S (NH HD) -> B NH HD S", NH=self.n_query_groups)
-        v = rearrange(v, "B S (NH HD) -> B NH S HD", NH=self.n_query_groups)
+        k, v = map(
+            lambda x: rearrange(x, "B S (NH HD) -> B NH S HD", NH=self.n_query_groups),
+            (k, v),
+        )
 
         # duplicate shared heads to align q, k, v shapes
         k, v = map(self.duplicate_heads, (k, v))

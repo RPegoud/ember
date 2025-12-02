@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.nn.init as init
 from torch.nn import Module
 
 
@@ -20,16 +19,5 @@ class SwiGLU(Module):
         self.V = nn.Linear(self.model_dim, self.hidden_dim, bias=False)
         self.W2 = nn.Linear(self.hidden_dim, self.model_dim, bias=False)
 
-        self.reset_parameters()
-
-    def reset_parameters(self) -> None:
-        for p in self.parameters():
-            if p.dim() > 1:
-                init.xavier_uniform_(p)
-
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        swish = F.silu(self.W(x))
-        x_V = self.V(x)
-        o = self.W2(swish * x_V)
-
-        return o
+        return self.W2(F.silu(self.W(x)) * self.V(x))
