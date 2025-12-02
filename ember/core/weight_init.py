@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 from torch.nn import init
 
-from ember.llm.rmsnorm import RMSNorm
-
 
 @torch.no_grad()
 def init_weights(module: nn.Module) -> None:
@@ -13,6 +11,7 @@ def init_weights(module: nn.Module) -> None:
         - nn.Embedding: random normal, zero-mean, std=0.02
         - nn.LayerNorm, nn.RMSNorm, custom RMSNorm: ones, zero bias
     """
+    from ember.llm.layers.norm import RMSNorm
 
     if isinstance(module, nn.Linear):
         init.normal_(module.weight, mean=0.0, std=0.02)

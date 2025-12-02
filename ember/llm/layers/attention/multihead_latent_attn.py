@@ -3,10 +3,9 @@ from typing import Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.nn.init as init
 from einops import rearrange
 
-from ember.llm.rope import RoPE, apply_rotary_pos_emb
+from ..embeddings import RoPE, apply_rotary_pos_emb
 
 
 class MultiHeadLatentAttn(nn.Module):
@@ -88,17 +87,3 @@ class MultiHeadLatentAttn(nn.Module):
         attn = rearrange(attn, "B NH S HD -> B S (NH HD)", NH=self.n_heads)
 
         return self.o_proj(attn)
-
-
-if __name__ == "__main__":
-    B, S, D = 16, 1024, 2048
-    max_seq_len = S
-    x = torch.randn((B, S, D))
-    latent_dim = 256
-    pos_dim = 128
-    n_heads = 16
-    attn = MultiHeadLatentAttn(
-        D, latent_dim, pos_dim, n_heads, max_seq_len=S, rope_theta=50_000
-    )
-    a = attn(x)
-    print(a.shape)

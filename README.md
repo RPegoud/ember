@@ -17,7 +17,9 @@
         - [x] Weight tying
         - [x] Embeddings
         - [x] Init
-        - [ ] Sampler
+        - [x] Samplers (top-K, top-p, min-p)
+        - [x] Add RoPE to GQA
+        - [ ] Generate loop
     - [x] Convert to PyTorch Lightning
     - [ ] KV cache
     - [ ] Test on TinyStories
