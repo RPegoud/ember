@@ -2,7 +2,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from ignite.llm import RMSNorm
+from ember.llm import RMSNorm
 
 
 @pytest.mark.parametrize(

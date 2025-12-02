@@ -1,6 +1,6 @@
-BASE_FLAGS=-it --rm  --shm-size=1g -v ${PWD}:/home/app/ignite -w /home/app/ignite
+BASE_FLAGS=-it --rm  --shm-size=1g -v ${PWD}:/home/app/ember -w /home/app/ember
 
-DOCKER_IMAGE_NAME = ignite
+DOCKER_IMAGE_NAME = ember
 IMAGE = $(DOCKER_IMAGE_NAME):latest
 DOCKER_RUN = docker run $(BASE_FLAGS) $(IMAGE)
 

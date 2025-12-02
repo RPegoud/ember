@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import torch.nn.init as init
 from einops import rearrange
 
-from ignite.llm.rope import RoPE, apply_rotary_pos_emb
+from ember.llm.rope import RoPE, apply_rotary_pos_emb
 
 
 class MultiHeadLatentAttn(nn.Module):
