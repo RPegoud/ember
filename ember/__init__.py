@@ -12,4 +12,5 @@ from .llm import (
     Tokenizer,
     TopKSampler,
     NucleusSampler,
+    KVCache,
 )

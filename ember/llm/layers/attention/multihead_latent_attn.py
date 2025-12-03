@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -25,7 +23,7 @@ class MultiHeadLatentAttn(nn.Module):
         latent_dim: int,
         pos_dim: int,
         n_heads: int,
-        rope_theta: Optional[int] = 50_000,
+        rope_theta: int = 50_000,
         *args,
         **kwargs,
     ):

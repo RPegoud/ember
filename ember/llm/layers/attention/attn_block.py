@@ -1,6 +1,9 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 
+from ...data.kv_cache import LayerKVCache
 from ..mlp import SwiGLU
 from ..norm import RMSNorm
 
@@ -15,13 +18,14 @@ class AttentionBlock(nn.Module):
     ):
         super().__init__()
         self.model_dim = model_dim
-        self.embeddings = ...
         self.mlp = SwiGLU(model_dim, hidden_dim)
         self.norm = RMSNorm(feature_dims=model_dim)
         self.attn = attn_module(**attn_kwargs)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, layer_cache: Optional[LayerKVCache] = None
+    ) -> torch.Tensor:
         norm = self.norm(x)
-        attn = self.attn(norm) + x
+        attn = self.attn(norm, layer_cache) + x
         norm_attn = self.norm(attn)
         return self.mlp(norm_attn) + attn

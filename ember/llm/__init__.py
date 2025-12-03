@@ -1,4 +1,4 @@
-from .data import Tokenizer
+from .data import KVCache, Tokenizer
 from .layers import (
     AttentionBlock,
     GroupedQueryAttn,
@@ -23,4 +23,5 @@ __all__ = [
     "Transformer",
     "TopKSampler",
     "NucleusSampler",
+    "KVCache",
 ]

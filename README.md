@@ -1,32 +1,40 @@
-# `Ember`: Portable Transformers and Diffusion 🦊
+<p align="center">
+    <a href="docs/images/stoix.png">
+        <img src="logo.png" alt="Ember logo" width="40%"/>
+    </a>
+</p>
 
-<img src="logo.png" width="170" align="right" />
+# `Ember`: Portable Transformers and Diffusion Models 🦊
+
+
 `Ember` is a PyTorch-based library offering simple and hackable implementations of Transformer architectures and Diffusion models designed for quick iteration and prototyping.
 
 
 ## Features 💎
 
-1. Llama implementation
+1. Language Models 
     - [x] RMSNorm
     - [x] RoPE
     - [x] GQA
     - [x] MLA
     - [x] SwiGLU
-    - [ ] Full LLM
+    - [x] Full LLM
         - [x] Tokenizer => encode, decode
         - [x] Weight tying
         - [x] Embeddings
         - [x] Init
         - [x] Samplers (top-K, top-p, min-p)
         - [x] Add RoPE to GQA
-        - [ ] Generate loop
+        - [x] KV cache
+        - [x] Generate loop
     - [x] Convert to PyTorch Lightning
-    - [ ] KV cache
-    - [ ] Test on TinyStories
+    - [ ] Ensure right padding for training, left for generation, add pad token
+    - [ ] Train on TinyStories
     - [ ] (optional) Lightning indexer
 
 2. Triton/Helion Kernels (write pytests at each step)
     - [ ] RMSNorm
+    - [ ] RoPE
     - [ ] SwiGLU
     - [ ] FlashAttention
     - [ ] CrossEntropyLoss
@@ -38,6 +46,7 @@
     - [ ] Hydra config
     - [ ] Neptune / wandb logging
     - [ ] Push models to hf hub
+    - [ ] Docstrings / Sphynx
 
 4. Diffusion
     - [ ] DDPM
