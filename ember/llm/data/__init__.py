@@ -1,4 +1,4 @@
 from .kv_cache import KVCache, LayerKVCache
-from .tokenizer import Tokenizer
+from .tokenizer import HFTokenizer
 
-__all__ = ["Tokenizer", "KVCache", "LayerKVCache"]
+__all__ = ["HFTokenizer", "KVCache", "LayerKVCache"]

@@ -36,7 +36,7 @@ class KVCache:
 
     def store(
         self, k: torch.Tensor, v: torch.Tensor, layer_idx: int
-    ) -> tuple[torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Updates the cache for a specific layer and returns the _full_ view (past+current)
         for attention computation.
@@ -65,14 +65,14 @@ class KVCache:
 
         return k_view, v_view
 
-    def step(self):
+    def step(self) -> None:
         """
         Increments the sequence pointer, called once per generation step
         after processing all layers.
         """
         self.current_len += 1
 
-    def initialize_prefill(self, seq_len: int):
+    def initialize_prefill(self, seq_len: int) -> None:
         """
         Sets the initial size of the cache after the prefill step.
 
@@ -98,7 +98,9 @@ class LayerKVCache:
         self.parent_cache = parent_cache
         self.layer_idx = layer_idx
 
-    def update(self, k: torch.Tensor, v: torch.Tensor) -> tuple[torch.Tensor]:
+    def update(
+        self, k: torch.Tensor, v: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Updates the parent KV cache.
 

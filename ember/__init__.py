@@ -9,7 +9,7 @@ from .llm import (
     apply_rotary_pos_emb,
     SwiGLU,
     Transformer,
-    Tokenizer,
+    HFTokenizer,
     TopKSampler,
     NucleusSampler,
     KVCache,

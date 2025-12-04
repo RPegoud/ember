@@ -3,17 +3,18 @@ from typing import Optional
 import torch
 import torch.nn as nn
 
-from ...data.kv_cache import LayerKVCache
+from ...types import Attention, LayerCache
 from ..mlp import SwiGLU
 from ..norm import RMSNorm
 
 
 class AttentionBlock(nn.Module):
+
     def __init__(
         self,
         model_dim: int,
         hidden_dim: int,
-        attn_module: nn.Module,
+        attn_module: Attention,
         attn_kwargs: dict[str, int],
     ):
         super().__init__()
@@ -23,7 +24,7 @@ class AttentionBlock(nn.Module):
         self.attn = attn_module(**attn_kwargs)
 
     def forward(
-        self, x: torch.Tensor, layer_cache: Optional[LayerKVCache] = None
+        self, x: torch.Tensor, layer_cache: Optional[LayerCache] = None
     ) -> torch.Tensor:
         norm = self.norm(x)
         attn = self.attn(norm, layer_cache) + x

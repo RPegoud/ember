@@ -1,4 +1,4 @@
-from .data import KVCache, Tokenizer
+from .data import HFTokenizer, KVCache
 from .layers import (
     AttentionBlock,
     GroupedQueryAttn,
@@ -11,6 +11,7 @@ from .layers import (
     apply_rotary_pos_emb,
 )
 from .models import Transformer
+from .types import Attention, Cache, LayerCache, Sampler, Tokenizer
 
 __all__ = [
     "AttentionBlock",
@@ -19,7 +20,12 @@ __all__ = [
     "SwiGLU",
     "GroupedQueryAttn",
     "MultiHeadLatentAttn",
+    "HFTokenizer",
     "Tokenizer",
+    "Attention",
+    "Cache",
+    "LayerCache",
+    "Sampler",
     "Transformer",
     "TopKSampler",
     "NucleusSampler",

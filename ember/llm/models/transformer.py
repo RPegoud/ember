@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Mapping, Optional
 
 import lightning as L
 import torch
@@ -6,8 +6,9 @@ import torch.nn.functional as F
 from torch import nn, optim
 
 from ...core.weight_init import init_weights
-from ..data.kv_cache import KVCache, LayerKVCache
+from ..data import KVCache, LayerKVCache
 from ..layers import AttentionBlock, RMSNorm
+from ..types import Attention, Sampler, Tokenizer
 
 
 class Transformer(L.LightningModule):
@@ -17,7 +18,7 @@ class Transformer(L.LightningModule):
         vocab_size: int,
         model_dim: int,
         hidden_dim: int,
-        attn_module: nn.Module,
+        attn_module: Attention,
         attn_kwargs: dict[str, int],
         n_attn_blocks: int,
         learning_rate: float = 1e-3,
@@ -51,11 +52,10 @@ class Transformer(L.LightningModule):
         )
 
     @property
-    def cache_config(self):
+    def cache_config(self) -> Mapping[str, int]:
         return self.attn_blocks[0].attn.cache_requirements
 
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> float:
-        self.tokenizer.padding_side = "right"
         input_ids = batch
         inputs = input_ids[:, :-1].contiguous()  # shift left
 
@@ -85,8 +85,8 @@ class Transformer(L.LightningModule):
         self,
         inputs: list[str],
         max_new_tokens: int,
-        sampler: nn.Module,
-        tokenizer: callable,
+        sampler: Sampler,
+        tokenizer: Tokenizer,
     ) -> torch.Tensor:
         cache_config: dict = self.cache_config
 

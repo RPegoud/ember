@@ -29,6 +29,7 @@
         - [x] Generate loop
     - [x] Convert to PyTorch Lightning
     - [x] Ensure right padding for training, left for generation, add pad token
+    - [ ] Add caching to MLA
     - [ ] Train on TinyStories
     - [ ] (optional) Lightning indexer
 
@@ -41,8 +42,8 @@
 
 3. Utilities
     - [ ] Comprehensive testing
-    - [ ] Custom typing?
-    - [ ] Add FLOPs wrapper
+    - [x] Custom typing
+    - [ ] FLOPs wrapper
     - [ ] Hydra config
     - [ ] Neptune / wandb logging
     - [ ] Push models to hf hub

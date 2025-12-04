@@ -4,7 +4,7 @@ import torch
 from transformers import AutoTokenizer
 
 
-class Tokenizer:
+class HFTokenizer:
     def __init__(self, model: str = "meta-llama/Llama-3.2-1B") -> None:
         self.base = AutoTokenizer.from_pretrained(model)
         self.eos_token_id = self.base.convert_tokens_to_ids(self.base.eos_token)

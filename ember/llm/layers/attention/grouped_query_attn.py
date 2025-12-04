@@ -1,11 +1,11 @@
-from typing import Optional
+from typing import Mapping, Optional
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 
-from ...data.kv_cache import LayerKVCache
+from ...types import LayerCache
 from ..embeddings import RoPE, apply_rotary_pos_emb
 
 
@@ -55,12 +55,12 @@ class GroupedQueryAttn(nn.Module):
         self.rope = RoPE(dim=self.kv_head_dim, base=rope_theta)
 
     @property
-    def cache_requirements(self) -> dict:
+    def cache_requirements(self) -> Mapping[str, int]:
         """
         Exposes the number of KV heads and their dimensions for the KV cache.
 
         Returns:
-            dict:
+            Mapping[str, int]:
                 - `n_heads` (int): the number of KV heads
                 - `head_dim` (int): the dimension of a single head
         """
@@ -79,7 +79,7 @@ class GroupedQueryAttn(nn.Module):
         return x
 
     def forward(
-        self, x: torch.Tensor, layer_cache: Optional[LayerKVCache]
+        self, x: torch.Tensor, layer_cache: Optional[LayerCache] = None
     ) -> torch.Tensor:
         fused_proj = self.fused_qkv(x)
 

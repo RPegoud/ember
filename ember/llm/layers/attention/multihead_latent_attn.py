@@ -1,8 +1,11 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 
+from ...types import LayerCache
 from ..embeddings import RoPE, apply_rotary_pos_emb
 
 
@@ -51,10 +54,14 @@ class MultiHeadLatentAttn(nn.Module):
 
         self.rope = RoPE(dim=self.pos_head_dim, base=rope_theta)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, layer_cache: Optional[LayerCache] = None
+    ) -> torch.Tensor:
         # Latent projections
         latent_qkv = self.fused_qkv_down_proj(x)
-        latent_q, *_ = torch.split(latent_qkv, int(self.latent_dim), dim=-1)
+        latent_q, latent_k, latent_v = torch.split(
+            latent_qkv, int(self.latent_dim), dim=-1
+        )
 
         # Up projections, reshape to multi-head
         fused_qkv = self.fused_qkv_up_proj(latent_qkv)
