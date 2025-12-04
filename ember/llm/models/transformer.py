@@ -55,7 +55,7 @@ class Transformer(L.LightningModule):
         return self.attn_blocks[0].attn.cache_requirements
 
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> float:
-        # TODO: ensure right padding
+        self.tokenizer.padding_side = "right"
         input_ids = batch
         inputs = input_ids[:, :-1].contiguous()  # shift left
 
@@ -83,13 +83,14 @@ class Transformer(L.LightningModule):
     @torch.inference_mode
     def generate(
         self,
-        indices: torch.Tensor,
+        inputs: list[str],
         max_new_tokens: int,
         sampler: nn.Module,
         tokenizer: callable,
     ) -> torch.Tensor:
-        # TODO: ensure left padding
         cache_config: dict = self.cache_config
+
+        indices = tokenizer.encode(inputs, mode="inference")
         B, S = indices.shape
 
         cache = KVCache(

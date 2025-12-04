@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 from transformers import AutoTokenizer
 
@@ -6,22 +8,37 @@ class Tokenizer:
     def __init__(self, model: str = "meta-llama/Llama-3.2-1B") -> None:
         self.base = AutoTokenizer.from_pretrained(model)
         self.eos_token_id = self.base.convert_tokens_to_ids(self.base.eos_token)
-        self.base.pad_token = self.base.eos_token
+        self.base.add_special_tokens({"pad_token": "<|pad|>"})
         self.vocab_size = len(self.base)
 
     def __getattr__(self, attr):
         return getattr(self.base, attr)
 
-    def __call__(self, x: torch.Tensor) -> torch.Tensor:
-        return self.base(
-            x,
-            return_tensors="pt",
-            return_attention_mask=False,
-            padding="longest",
-        )["input_ids"]
+    def __call__(
+        self, x: torch.Tensor, mode: Literal["train", "inference"]
+    ) -> torch.Tensor:
+        original_side = self.base.padding_side
 
-    def encode(self, x: torch.Tensor) -> torch.Tensor:
-        return self(x)
+        try:
+            if mode == "inference":
+                self.base.padding_side = "left"
+            else:
+                self.base.padding_side = "right"
+
+            return self.base(
+                x,
+                return_tensors="pt",
+                return_attention_mask=False,
+                padding="longest",
+            )["input_ids"]
+
+        finally:
+            self.base.padding_side = original_side
+
+    def encode(
+        self, x: torch.Tensor, mode: Literal["train", "inference"]
+    ) -> torch.Tensor:
+        return self(x, mode)
 
     def decode(self, x: torch.Tensor) -> torch.Tensor:
         if isinstance(x, torch.Tensor):

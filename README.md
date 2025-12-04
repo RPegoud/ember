@@ -28,7 +28,7 @@
         - [x] KV cache
         - [x] Generate loop
     - [x] Convert to PyTorch Lightning
-    - [ ] Ensure right padding for training, left for generation, add pad token
+    - [x] Ensure right padding for training, left for generation, add pad token
     - [ ] Train on TinyStories
     - [ ] (optional) Lightning indexer
 
