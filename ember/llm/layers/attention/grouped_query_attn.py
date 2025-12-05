@@ -81,31 +81,33 @@ class GroupedQueryAttn(nn.Module):
     def forward(
         self, x: torch.Tensor, layer_cache: Optional[LayerCache] = None
     ) -> torch.Tensor:
+        # --- QKV Projections ---
         fused_proj = self.fused_qkv(x)
-
         q, k, v = torch.split(
             fused_proj, [self.model_dim, self.kv_dim, self.kv_dim], dim=-1
         )
 
-        # split q, k, v in different heads
+        # --- Reshape to Multi-Head ---
         q = rearrange(q, "B S (NH HD) -> B NH S HD", NH=self.n_query_heads)
         k, v = map(
             lambda x: rearrange(x, "B S (NH HD) -> B NH S HD", NH=self.n_query_groups),
             (k, v),
         )
 
+        # --- Positional Embeddings ---
         cos, sin = self.rope(
             q, offset=layer_cache.parent_cache.current_len if layer_cache else 0
         )
-        cos, sin = map(lambda x: x.transpose(0, 2), (cos, sin))
         q, k = apply_rotary_pos_emb(q, k, cos, sin)
 
+        # --- KV Cache Update ---
         if layer_cache is not None:
             k, v = layer_cache.update(k, v)
 
-        # duplicate shared heads to align q, k, v shapes
+        # --- Duplicate heads to align QKV shapes ---
         k, v = map(self.duplicate_heads, (k, v))
 
+        # --- Attention ---
         attn_outputs = F.scaled_dot_product_attention(q, k, v, is_causal=True)
         attn_outputs = rearrange(attn_outputs, "B NH S HD -> B S (NH HD)")
 
