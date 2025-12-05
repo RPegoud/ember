@@ -1,8 +1,9 @@
-from typing import Literal, Protocol
+from typing import Literal, Protocol, runtime_checkable
 
 import torch
 
 
+@runtime_checkable
 class Tokenizer(Protocol):
     vocab_size: int
 

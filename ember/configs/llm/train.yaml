@@ -1,0 +1,7 @@
+defaults:
+  - model: llama # models: [deepseek, llama]
+  - tokenizer: gpt2 # tokenizers: [gpt2, llama3]
+  - hyperparams: default
+  - _self_
+
+seed: 0

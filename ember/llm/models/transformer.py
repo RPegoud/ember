@@ -3,12 +3,14 @@ from typing import Mapping, Optional
 import lightning as L
 import torch
 import torch.nn.functional as F
+from hydra.utils import instantiate
+from omegaconf import DictConfig
 from torch import nn, optim
 
 from ...core.weight_init import init_weights
 from ..data import KVCache, LayerKVCache
 from ..layers import AttentionBlock, RMSNorm
-from ..types import Attention, Sampler, Tokenizer
+from ..types import Sampler, Tokenizer
 
 
 class Transformer(L.LightningModule):
@@ -18,10 +20,10 @@ class Transformer(L.LightningModule):
         vocab_size: int,
         model_dim: int,
         hidden_dim: int,
-        attn_module: Attention,
-        attn_kwargs: dict[str, int],
         n_attn_blocks: int,
-        learning_rate: float = 1e-3,
+        attention: DictConfig,
+        learning_rate: float,
+        pad_token_id: int,
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -30,26 +32,23 @@ class Transformer(L.LightningModule):
         self.model_dim = model_dim
         self.hidden_dim = hidden_dim
         self.n_attn_blocks = n_attn_blocks
-        self.attn_kwargs = attn_kwargs
         self.lr = learning_rate
-        attn_kwargs["model_dim"] = model_dim
+        self.pad_token_id = pad_token_id
 
         self.embed = nn.Embedding(num_embeddings=vocab_size, embedding_dim=model_dim)
         self.attn_blocks = nn.ModuleList(
             [
-                AttentionBlock(model_dim, hidden_dim, attn_module, attn_kwargs)
+                AttentionBlock(
+                    model_dim,
+                    hidden_dim,
+                    instantiate(attention, model_dim=model_dim),
+                )
                 for _ in range(n_attn_blocks)
             ]
         )
         self.norm = RMSNorm(feature_dims=model_dim)
 
         self.apply(init_weights)
-
-        print(self.parameters)
-        print(
-            """Parameter count: """
-            f"""{sum(p.numel() for p in self.parameters() if p.requires_grad):.2e}"""
-        )
 
     @property
     def cache_config(self) -> Mapping[str, int]:
@@ -60,7 +59,7 @@ class Transformer(L.LightningModule):
         inputs = input_ids[:, :-1].contiguous()  # shift left
 
         targets = input_ids.clone()[:, 1:].contiguous()  # shift right
-        targets[targets == self.tokenizer.pad_id] = -100  # mask loss for pad tokens
+        targets[targets == self.pad_token_id] = -100  # mask loss for <|pad|> tokens
 
         logits = self(inputs)
         loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))

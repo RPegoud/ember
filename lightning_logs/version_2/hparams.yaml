@@ -1,0 +1,11 @@
+vocab_size: 50258
+model_dim: 256
+hidden_dim: 1024
+n_attn_blocks: 8
+attention:
+  _target_: ember.llm.layers.attention.GroupedQueryAttn
+  n_query_heads: 16
+  n_query_groups: 4
+  rope_theta: 50000
+learning_rate: 0.001
+pad_token_id: 50257

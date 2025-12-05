@@ -15,13 +15,12 @@ class AttentionBlock(nn.Module):
         model_dim: int,
         hidden_dim: int,
         attn_module: Attention,
-        attn_kwargs: dict[str, int],
     ):
         super().__init__()
         self.model_dim = model_dim
         self.mlp = SwiGLU(model_dim, hidden_dim)
         self.norm = RMSNorm(feature_dims=model_dim)
-        self.attn = attn_module(**attn_kwargs)
+        self.attn = attn_module
 
     def forward(
         self, x: torch.Tensor, layer_cache: Optional[LayerCache] = None
