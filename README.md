@@ -29,7 +29,7 @@
         - [x] Generate loop
     - [x] Convert to PyTorch Lightning
     - [x] Ensure right padding for training, left for generation, add pad token
-    - [ ] Add caching to MLA
+    - [x] Add caching to MLA
     - [ ] Train on TinyStories
     - [ ] (optional) Lightning indexer
 

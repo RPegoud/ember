@@ -1,8 +1,9 @@
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 import torch
 
 
+@runtime_checkable
 class Cache(Protocol):
     k_cache: list[torch.tensor]
     v_cache: list[torch.tensor]
@@ -18,6 +19,7 @@ class Cache(Protocol):
     def initialize_prefill(self, seq_len: int) -> None: ...
 
 
+@runtime_checkable
 class LayerCache(Protocol):
     parent_cache: Cache
     layer_idx: int

@@ -3,16 +3,16 @@ from typing import Literal
 import torch
 from transformers import AutoTokenizer
 
+PAD_TOKEN = "<|pad|>"
 
 class HFTokenizer:
-    def __init__(self, model: str = "meta-llama/Llama-3.2-1B") -> None:
-        self.base = AutoTokenizer.from_pretrained(model)
-        self.eos_token_id = self.base.convert_tokens_to_ids(self.base.eos_token)
-        self.base.add_special_tokens({"pad_token": "<|pad|>"})
-        self.vocab_size = len(self.base)
 
-    def __getattr__(self, attr):
-        return getattr(self.base, attr)
+    def __init__(self, model: str) -> None:
+        self.base = AutoTokenizer.from_pretrained(model)
+        self.base.add_special_tokens({"pad_token": PAD_TOKEN})
+        self.eos_token_id = self.base.convert_tokens_to_ids(self.base.eos_token)
+        self.pad_token_id = self.base.convert_tokens_to_ids(PAD_TOKEN)
+        self.vocab_size = len(self.base)
 
     def __call__(
         self, x: torch.Tensor, mode: Literal["train", "inference"]

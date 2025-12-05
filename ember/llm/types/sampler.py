@@ -1,9 +1,9 @@
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 import torch
-import torch.nn as nn
 
 
+@runtime_checkable
 class Sampler(Protocol):
     temperature: float
 

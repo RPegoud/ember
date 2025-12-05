@@ -1,0 +1,5 @@
+_target_: ember.llm.layers.attention.GroupedQueryAttn
+
+n_query_heads: 16
+n_query_groups: 4
+rope_theta: 50000
