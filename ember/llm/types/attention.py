@@ -1,12 +1,11 @@
 from typing import Mapping, Optional, Protocol
 
 import torch
-import torch.nn as nn
 
 from .cache import LayerCache
 
 
-class Attention(nn.Module, Protocol):
+class Attention(Protocol):
     @property
     def cache_requirements(self) -> Mapping[str, int]: ...
 

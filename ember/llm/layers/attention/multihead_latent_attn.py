@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Mapping, Optional
 
 import torch
 import torch.nn as nn
@@ -41,7 +41,11 @@ class MultiHeadLatentAttn(nn.Module):
 
         # Content projections
         self.fused_qkv_down_proj = nn.Linear(model_dim, latent_dim * 3)
-        self.fused_qkv_up_proj = nn.Linear(latent_dim * 3, model_dim * 3)
+
+        self.q_up_proj = nn.Linear(latent_dim, model_dim)
+        self.k_up_proj = nn.Linear(latent_dim, model_dim)
+        self.v_up_proj = nn.Linear(latent_dim, model_dim)
+        # self.fused_qkv_up_proj = nn.Linear(latent_dim * 3, model_dim * 3)
 
         # Positional projections (decoupled RoPE)
         self.q_pos_proj = nn.Linear(latent_dim, pos_dim)
@@ -54,38 +58,82 @@ class MultiHeadLatentAttn(nn.Module):
 
         self.rope = RoPE(dim=self.pos_head_dim, base=rope_theta)
 
+    @property
+    def cache_requirements(self) -> Mapping[str, int]:
+        return {
+            "n_heads": 1,
+            "head_dim": self.latent_dim + self.pos_head_dim,
+        }
+
     def forward(
         self, x: torch.Tensor, layer_cache: Optional[LayerCache] = None
     ) -> torch.Tensor:
-        # Latent projections
+        B, S, _ = x.shape
+
+        # --- Latent projection ---
         latent_qkv = self.fused_qkv_down_proj(x)
         latent_q, latent_k, latent_v = torch.split(
             latent_qkv, int(self.latent_dim), dim=-1
         )
 
-        # Up projections, reshape to multi-head
-        fused_qkv = self.fused_qkv_up_proj(latent_qkv)
-        q, k, v = torch.split(fused_qkv, int(self.model_dim), dim=-1)  # cache kv
+        # --- Positional projection (new token) ---
+        pos_k = self.k_pos_proj(x)
+        pos_k_rope = pos_k.unsqueeze(1)  # dummy head dim => [B, 1, S, D]
+        offset = layer_cache.parent_cache.current_len if layer_cache else 0
+        cos, sin = self.rope(pos_k_rope, offset=offset)
+
+        # rotate only the keys
+        _, pos_k = apply_rotary_pos_emb(pos_k_rope, pos_k_rope, cos, sin)
+
+        # --- KV Caching ---
+        if layer_cache is not None:
+            # prepare kv payloads, reshape to [B, 1, S, D] to meet cache requirements
+            k_payload = torch.cat([latent_k.unsqueeze(1), pos_k], dim=-1)
+            padding = torch.zeros(
+                (B, 1, S, self.pos_head_dim), device=x.device, dtype=x.dtype
+            )  # pad v to match k's dimension
+            v_payload = torch.cat([latent_v.unsqueeze(1), padding], dim=-1)
+
+            # update and retireve history
+            cached_k, cached_v = layer_cache.update(k_payload, v_payload)
+
+            # squeeze dummy head dim, unpack to latent and pos tensors
+            cached_k, cached_v = map(lambda x: x.squeeze(1), (cached_k, cached_v))
+            latent_k_hist, latent_v_hist = map(
+                lambda x: x[..., : self.latent_dim], (cached_k, cached_v)
+            )
+            pos_k_hist = cached_k[..., self.latent_dim :]
+
+        else:  # training mode (no cache)
+            latent_k_hist = latent_k
+            latent_v_hist = latent_v
+            pos_k_hist = pos_k.squeeze(1)
+
+        # --- Up projection ---
+        q = self.q_up_proj(latent_q)
+        k = self.k_up_proj(latent_k_hist)
+        v = self.v_up_proj(latent_v_hist)
+
+        # reshape to multi-head
         q, k, v = map(
             lambda x: rearrange(x, "B S (NH HD) -> B NH S HD", NH=self.n_heads),
             (q, k, v),
         )
 
-        # Positional Embeddings
+        # --- Combine with Positional embeddings ---
+        # Q Positional projection (current step)
         pos_q = self.q_pos_proj(latent_q)
-        pos_k = self.k_pos_proj(x)
-
         pos_q = rearrange(pos_q, "B S (NH HD) -> B NH S HD", NH=self.n_heads)
-        pos_k = rearrange(pos_k, "B S (NH HD) -> B NH S HD", NH=1)
+        cos, sin = self.rope(pos_q, offset=offset)
 
-        cos, sin = self.rope(pos_q)
-        cos, sin = map(lambda x: x.transpose(0, 2), (cos, sin))
-        pos_q, pos_k = apply_rotary_pos_emb(pos_q, pos_k, cos, sin)
-        pos_k = pos_k.expand(-1, self.n_heads, -1, -1)  # broadcast to all heads
+        pos_q, _ = apply_rotary_pos_emb(pos_q, pos_q, cos, sin)
+        # K Positional projection (full history), broadcast to multi-head
+        pos_k_hist = pos_k_hist.unsqueeze(1).expand(-1, self.n_heads, -1, -1)
 
+        # --- Attention ---
         # Merge content and positional heads
         q = torch.cat([q, pos_q], dim=-1)
-        k = torch.cat([k, pos_k], dim=-1)
+        k = torch.cat([k, pos_k_hist], dim=-1)
 
         # Attention and output projection
         attn = F.scaled_dot_product_attention(q, k, v, is_causal=True)
