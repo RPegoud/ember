@@ -12,6 +12,8 @@ trainer:
   log_every_n_steps: 10 
 
 data:
+  dataset: "roneneldan/TinyStories"
+  split: "train"
   batch_size: 64
   num_workers: 4
   max_seq_len: 512

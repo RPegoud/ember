@@ -11,7 +11,8 @@ from ..models import Transformer
 
 
 class Collator:
-    def __init__(self, tokenizer):
+
+    def __init__(self, tokenizer: HFTokenizer) -> None:
         self.tokenizer = tokenizer
 
     def __call__(self, batch: list[str]) -> torch.Tensor:
@@ -36,23 +37,23 @@ def main(cfg: DictConfig):
         pad_token_id=tokenizer.pad_token_id,
     )
 
-    ds = load_dataset("roneneldan/TinyStories", split="train")
-    loader = DataLoader(
+    ds = load_dataset(cfg.hparams.data.dataset, split=cfg.hparams.data.split)
+    train_loader = DataLoader(
         ds,
-        batch_size=cfg.hyperparams.data.batch_size,
+        batch_size=cfg.hparams.data.batch_size,
         persistent_workers=True,
-        num_workers=cfg.hyperparams.data.num_workers,
+        num_workers=cfg.hparams.data.num_workers,
         collate_fn=collator,
     )
 
     trainer = L.Trainer(
-        max_epochs=cfg.hyperparams.trainer.max_epochs,
-        precision=cfg.hyperparams.trainer.precision,
-        gradient_clip_val=cfg.hyperparams.trainer.gradient_clip_val,
-        accumulate_grad_batches=cfg.hyperparams.trainer.accumulate_grad_batches,
-        log_every_n_steps=cfg.hyperparams.trainer.log_every_n_steps,
+        max_epochs=cfg.hparams.trainer.max_epochs,
+        precision=cfg.hparams.trainer.precision,
+        gradient_clip_val=cfg.hparams.trainer.gradient_clip_val,
+        accumulate_grad_batches=cfg.hparams.trainer.accumulate_grad_batches,
+        log_every_n_steps=cfg.hparams.trainer.log_every_n_steps,
     )
-    trainer.fit(model=model, train_dataloaders=loader)
+    trainer.fit(model=model, train_dataloaders=train_loader)
 
 
 if __name__ == "__main__":
