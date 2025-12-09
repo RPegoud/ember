@@ -12,6 +12,7 @@ from .layers import (
 )
 from .models import Transformer
 from .types import Attention, Cache, LayerCache, Sampler, Tokenizer
+from .utils import GenerateCallback, Logger
 
 __all__ = [
     "AttentionBlock",

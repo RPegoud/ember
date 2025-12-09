@@ -63,8 +63,19 @@ class Transformer(L.LightningModule):
 
         logits = self(inputs)
         loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
-        self.log("Train loss", loss, prog_bar=True)
+        self.log("train_loss", loss, prog_bar=True)
         return loss
+
+    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> float:
+        input_ids = batch
+        inputs = input_ids[:, :-1].contiguous()  # shift left
+
+        targets = input_ids.clone()[:, 1:].contiguous()  # shift right
+        targets[targets == self.pad_token_id] = -100  # mask loss for <|pad|> tokens
+
+        logits = self(inputs)
+        loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
+        self.log("val_loss", loss, prog_bar=True)
 
     def configure_optimizers(self) -> None:
         return optim.AdamW(self.parameters(), lr=self.lr)
@@ -75,8 +86,9 @@ class Transformer(L.LightningModule):
             layer_cache = LayerKVCache(cache, layer_idx) if cache else None
             h = attn_block(h, layer_cache)
         h = self.norm(h)
-        # weight tying (use embedding weights as output weights)
-        logits = F.linear(h, weight=self.embed.weight)
+        logits = F.linear(
+            h, weight=self.embed.weight
+        )  # weight tying (use embedding weights as output weights)
         return logits
 
     @torch.inference_mode
