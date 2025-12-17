@@ -13,3 +13,4 @@ wheels/
 outputs
 wandb
 lightning_logs
+ember/llm/checkpoints

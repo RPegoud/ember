@@ -9,11 +9,12 @@ optimizer:
 
 # sampler: # TODO: add sampler to config with target
 
+
 train:
-  epochs: 1
+  epochs: ~
   gradient_clip_val: 1.0
-  max_steps: 30_000 
-  val_interval: 1_000
+  max_steps: 30 # number of optimiser steps
+  val_interval: 10
 
 callbacks:
   generate:
@@ -21,10 +22,10 @@ callbacks:
 
 data:
   dataset: "roneneldan/TinyStories"
-  streaming: true # whether to stream the dataset or not
-  n_val_samples: 256
-  batch_size: 64
-  target_batch_size: 256
+  streaming: true
+  n_val_samples: 128
+  batch_size: 4 # the effective batch size
+  target_batch_size: 64 # the batch size to reach via gradient accumulation
 
 scheduler:
   warmup_steps: 1e3

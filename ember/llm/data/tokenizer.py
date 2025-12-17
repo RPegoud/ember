@@ -5,10 +5,12 @@ from transformers import AutoTokenizer
 
 PAD_TOKEN = "<|pad|>"
 
+
 class HFTokenizer:
 
-    def __init__(self, model: str) -> None:
+    def __init__(self, model: str, max_seq_len: int) -> None:
         self.base = AutoTokenizer.from_pretrained(model)
+        self.max_seq_len = max_seq_len
         self.base.add_special_tokens({"pad_token": PAD_TOKEN})
         self.eos_token_id = self.base.convert_tokens_to_ids(self.base.eos_token)
         self.pad_token_id = self.base.convert_tokens_to_ids(PAD_TOKEN)
@@ -27,9 +29,11 @@ class HFTokenizer:
 
             return self.base(
                 x,
+                padding="longest",
+                truncation=True,
+                max_length=self.max_seq_len,
                 return_tensors="pt",
                 return_attention_mask=False,
-                padding="longest",
             )["input_ids"]
 
         finally:

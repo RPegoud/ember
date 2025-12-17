@@ -1,2 +1,2 @@
-from .callbacks import GenerateCallback
+from .callbacks import CheckpointCallback, GenerateCallback
 from .logger import Logger

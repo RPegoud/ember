@@ -2,6 +2,7 @@ import torch
 
 
 class KVCache:
+
     def __init__(
         self,
         n_layers: int,
@@ -9,6 +10,7 @@ class KVCache:
         max_seq_len: int,
         n_heads: int,
         head_dim: int,
+        device: str,
         dtype: torch.dtype = torch.bfloat16,
     ):
         """
@@ -19,6 +21,7 @@ class KVCache:
             max_seq_len (int): the cache's maximum sequence length
             n_heads (int): the number of attention heads used by the model
             head_dim (int): the dimension of a single head
+            device (str): the device holding the kv cache
         """
         self.n_layers = n_layers
         self.batch_size = max_batch_size
@@ -26,11 +29,11 @@ class KVCache:
         self.current_len = 0
 
         self.k_cache = [
-            torch.zeros((max_batch_size, n_heads, max_seq_len, head_dim))
+            torch.zeros((max_batch_size, n_heads, max_seq_len, head_dim)).to(device)
             for _ in range(n_layers)
         ]
         self.v_cache = [
-            torch.zeros((max_batch_size, n_heads, max_seq_len, head_dim))
+            torch.zeros((max_batch_size, n_heads, max_seq_len, head_dim)).to(device)
             for _ in range(n_layers)
         ]
 

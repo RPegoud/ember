@@ -21,7 +21,7 @@ class RMSNorm(Module):
 
         self.reset_parameters()
 
-    def reset_parameters(self) -> None:
+    def reset_parameters(self) -> None:  # TODO: obsolete?
         init.ones_(self.weight)
 
     def _norm(self, x: torch.Tensor, dims: tuple) -> torch.Tensor:

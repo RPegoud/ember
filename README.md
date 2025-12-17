@@ -30,8 +30,12 @@
     - [x] Convert to PyTorch Lightning
     - [x] Ensure right padding for training, left for generation, add pad token
     - [x] Add caching to MLA
+    - [x] Switch to Fabric (drop Lightning trainer)
+    - [ ] Benchmark compile
     - [ ] Train on TinyStories
     - [ ] (optional) Lightning indexer
+    - [ ] Vision Transformer
+
 
 2. Triton/Helion Kernels (write pytests at each step)
     - [ ] RMSNorm
@@ -40,16 +44,18 @@
     - [ ] FlashAttention
     - [ ] CrossEntropyLoss
 
-3. Utilities
-    - [ ] Comprehensive testing
-    - [x] Custom typing
-    - [ ] FLOPs wrapper
-    - [ ] Hydra config
-    - [ ] Neptune / wandb logging
-    - [ ] Push models to hf hub
-    - [ ] Docstrings / Sphynx
 
-4. Diffusion
+3. Diffusion
     - [ ] DDPM
     - [ ] Flow-matching
     - [ ] Benchmark on CIFAR-10, CelebA-HQ
+
+4. Utilities
+    - [ ] Comprehensive testing
+    - [x] Custom typing
+    - [ ] FLOPs wrapper (possibly w [Fabric](https://lightning.ai/docs/fabric/stable/api/utilities.html))
+    - [x] Hydra config
+    - [ ] Sampler and Scheduler configs
+    - [x] wandb logging
+    - [x] Push models to hf hub
+    - [ ] Docstrings / Sphynx
