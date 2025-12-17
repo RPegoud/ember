@@ -3,7 +3,7 @@ import torch
 
 def rotate_half(x: torch.Tensor) -> torch.Tensor:
     x1, x2 = x[..., : x.shape[-1] // 2], x[..., x.shape[-1] // 2 :]
-    return torch.cat((-x2, x1), dim=x1.ndim - 1)
+    return torch.cat((-x2, x1), dim=x1.ndim - 1).to(x.device)
 
 
 @torch.jit.script

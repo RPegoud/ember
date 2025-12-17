@@ -1,11 +1,10 @@
 from typing import Mapping, Optional
 
-import lightning as L
 import torch
 import torch.nn.functional as F
 from hydra.utils import instantiate
 from omegaconf import DictConfig
-from torch import nn, optim
+from torch import nn
 
 from ...core.weight_init import init_weights
 from ..data import KVCache, LayerKVCache
@@ -13,27 +12,28 @@ from ..layers import AttentionBlock, RMSNorm
 from ..types import Sampler, Tokenizer
 
 
-class Transformer(L.LightningModule):
+class Transformer(nn.Module):
 
     def __init__(
         self,
         vocab_size: int,
         model_dim: int,
         hidden_dim: int,
+        max_seq_len: int,
         n_attn_blocks: int,
         attention: DictConfig,
-        learning_rate: float,
         pad_token_id: int,
+        device: str,
     ):
         super().__init__()
-        self.save_hyperparameters()
 
         self.vocab_size = vocab_size
         self.model_dim = model_dim
+        self.max_seq_len = max_seq_len
         self.hidden_dim = hidden_dim
         self.n_attn_blocks = n_attn_blocks
-        self.lr = learning_rate
         self.pad_token_id = pad_token_id
+        self.device = device
 
         self.embed = nn.Embedding(num_embeddings=vocab_size, embedding_dim=model_dim)
         self.attn_blocks = nn.ModuleList(
@@ -54,31 +54,16 @@ class Transformer(L.LightningModule):
     def cache_config(self) -> Mapping[str, int]:
         return self.attn_blocks[0].attn.cache_requirements
 
-    def training_step(self, batch: torch.Tensor, batch_idx: int) -> float:
+    def get_causal_loss(self, batch: torch.Tensor) -> float:
         input_ids = batch
         inputs = input_ids[:, :-1].contiguous()  # shift left
 
         targets = input_ids.clone()[:, 1:].contiguous()  # shift right
         targets[targets == self.pad_token_id] = -100  # mask loss for <|pad|> tokens
 
-        logits = self(inputs)
+        logits = self.forward(inputs)
         loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
-        self.log("train_loss", loss, prog_bar=True)
         return loss
-
-    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> float:
-        input_ids = batch
-        inputs = input_ids[:, :-1].contiguous()  # shift left
-
-        targets = input_ids.clone()[:, 1:].contiguous()  # shift right
-        targets[targets == self.pad_token_id] = -100  # mask loss for <|pad|> tokens
-
-        logits = self(inputs)
-        loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
-        self.log("val_loss", loss, prog_bar=True)
-
-    def configure_optimizers(self) -> None:
-        return optim.AdamW(self.parameters(), lr=self.lr)
 
     def forward(self, x: torch.Tensor, cache: Optional[KVCache] = None) -> torch.Tensor:
         h = self.embed(x)
@@ -94,15 +79,18 @@ class Transformer(L.LightningModule):
     @torch.inference_mode
     def generate(
         self,
-        inputs: list[str],
+        prompts: list[str],
         max_new_tokens: int,
         sampler: Sampler,
         tokenizer: Tokenizer,
     ) -> torch.Tensor:
         cache_config: dict = self.cache_config
 
-        indices = tokenizer.encode(inputs, mode="inference")
+        indices = tokenizer.encode(prompts, mode="inference").to(self.device)
         B, S = indices.shape
+        assert (
+            S + max_new_tokens <= self.max_seq_len
+        ), f"Got input with sequence length {S}, generating {max_new_tokens=} will exceed {self.max_seq_len=}"
 
         cache = KVCache(
             n_layers=self.n_attn_blocks,
@@ -110,6 +98,7 @@ class Transformer(L.LightningModule):
             max_seq_len=S + max_new_tokens,
             n_heads=cache_config["n_heads"],
             head_dim=cache_config["head_dim"],
+            device=self.device,
         )
         finished = torch.zeros((B,), dtype=torch.bool, device=indices.device)
 

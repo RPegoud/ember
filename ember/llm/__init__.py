@@ -1,4 +1,4 @@
-from .data import HFTokenizer, KVCache
+from .data import HFDataModule, HFTokenizer, KVCache
 from .layers import (
     AttentionBlock,
     GroupedQueryAttn,
@@ -12,7 +12,7 @@ from .layers import (
 )
 from .models import Transformer
 from .types import Attention, Cache, LayerCache, Sampler, Tokenizer
-from .utils import GenerateCallback, Logger
+from .utils import CheckpointCallback, GenerateCallback, Logger
 
 __all__ = [
     "AttentionBlock",
