@@ -117,9 +117,7 @@ def validate(
     state.model.train()
 
 
-@hydra.main(
-    version_base=None, config_path="../../config/llm", config_name="train_debug"
-)
+@hydra.main(version_base=None, config_path="../../config/llm", config_name="train")
 def main(cfg: DictConfig) -> None:
     # --- Loggers ---
     logger = Logger()
