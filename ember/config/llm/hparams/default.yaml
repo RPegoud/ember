@@ -12,8 +12,8 @@ optimizer:
 train:
   epochs: 1
   gradient_clip_val: 1.0
-  max_steps: 30_000 
-  val_interval: 1_000
+  max_steps: 7_000 
+  val_interval: 500
 
 callbacks:
   generate:
@@ -23,8 +23,8 @@ data:
   dataset: "roneneldan/TinyStories"
   streaming: true # whether to stream the dataset or not
   n_val_samples: 512
-  batch_size: 64
-  target_batch_size: 256
+  batch_size: 16
+  target_batch_size: 64
 
 # scheduler:
 #   warmup_steps: 1e3

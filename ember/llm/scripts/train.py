@@ -17,9 +17,9 @@ from ..utils import CheckpointCallback, GenerateCallback, Logger
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 PROMPTS = [
-    # "Bob was a robot",
+    "Bob was a tiny robot",
     "Once upon a time",
-    # "One day, a dragon",
+    "One day, a dragon",
 ]
 
 
@@ -214,4 +214,5 @@ def main(cfg: DictConfig) -> None:
 
 
 if __name__ == "__main__":
+    torch.set_float32_matmul_precision("high")
     main()
