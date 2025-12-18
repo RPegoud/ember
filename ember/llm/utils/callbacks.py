@@ -40,7 +40,7 @@ class GenerateCallback:
         self.logger(f"Step {state.global_step} Generation", color="blue")
         for idx, text in enumerate(generated_texts):
             self.logger(f"{idx}: {text}", color="blue", style="normal")
-
+            self.logger("-" * 30)
         state.model.train()
 
 

@@ -32,6 +32,7 @@
     - [x] Add caching to MLA
     - [x] Switch to Fabric (drop Lightning trainer)
     - [ ] Benchmark compile
+    - [ ] Resume training => runpod interruptible instance
     - [ ] Train on TinyStories
     - [ ] (optional) Lightning indexer
     - [ ] Vision Transformer

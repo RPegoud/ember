@@ -17,8 +17,8 @@ from ..utils import CheckpointCallback, GenerateCallback, Logger
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 PROMPTS = [
-    "Bob was a robot",
-    # "Once upon a time",
+    # "Bob was a robot",
+    "Once upon a time",
     # "One day, a dragon",
 ]
 

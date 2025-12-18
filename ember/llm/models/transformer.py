@@ -65,6 +65,7 @@ class Transformer(nn.Module):
         loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
         return loss
 
+    @torch.compile
     def forward(self, x: torch.Tensor, cache: Optional[KVCache] = None) -> torch.Tensor:
         h = self.embed(x)
         for layer_idx, attn_block in enumerate(self.attn_blocks):

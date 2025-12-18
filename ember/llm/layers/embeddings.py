@@ -29,7 +29,7 @@ class RoPE(torch.nn.Module):
     def forward(self, x, seq_dim: int = 2, offset: int = 0) -> tuple[torch.Tensor]:
         seq_len = x.shape[seq_dim]
         if seq_len != self.seq_len_cached:
-            self.seq_len_cached = seq_len
+            self.seq_len_cached = torch.tensor(seq_len)
             t = (torch.arange(x.shape[seq_dim], device=x.device) + offset).type_as(
                 self.inv_freq
             )
