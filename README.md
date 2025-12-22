@@ -32,11 +32,11 @@
     - [x] Add caching to MLA
     - [x] Switch to Fabric (drop Lightning trainer)
     - [ ] Benchmark compile
+        - [ ] Fix KV Cache recompilation warning (allocate single tensor instead of list of tensors?)
+    - [x] Train on TinyStories
+    - [ ] Test MLA 
     - [ ] Resume training => runpod interruptible instance
-    - [ ] Train on TinyStories
     - [ ] (optional) Lightning indexer
-    - [ ] Vision Transformer
-
 
 2. Triton/Helion Kernels (write pytests at each step)
     - [ ] RMSNorm
@@ -56,7 +56,8 @@
     - [x] Custom typing
     - [ ] FLOPs wrapper (possibly w [Fabric](https://lightning.ai/docs/fabric/stable/api/utilities.html))
     - [x] Hydra config
-    - [ ] Sampler and Scheduler configs
+    - [] Sampler and Scheduler configs
     - [x] wandb logging
     - [x] Push models to hf hub
     - [ ] Docstrings / Sphynx
+   

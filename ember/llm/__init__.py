@@ -12,7 +12,7 @@ from .layers import (
 )
 from .models import Transformer
 from .types import Attention, Cache, LayerCache, Sampler, Tokenizer
-from .utils import CheckpointCallback, GenerateCallback, Logger
+from .utils import CheckpointCallback, GenerateCallback, Logger, create_scheduler
 
 __all__ = [
     "AttentionBlock",

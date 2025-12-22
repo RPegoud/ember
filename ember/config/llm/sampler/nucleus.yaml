@@ -1,0 +1,3 @@
+_target_: ember.llm.layers.sampler.NucleusSampler
+top_p: 0.9
+temperature: 1.0

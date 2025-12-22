@@ -2,6 +2,7 @@ import os
 
 import hydra
 import torch
+from hydra.utils import instantiate
 from lightning.fabric import Fabric
 from lightning.fabric.utilities import AttributeDict
 from lightning.pytorch.loggers import WandbLogger
@@ -75,13 +76,19 @@ def train(
             clip_val=cfg.hparams.train.gradient_clip_val,
         )
         state.optimizer.step()
+        state.scheduler.step()
         state.optimizer.zero_grad(set_to_none=True)
 
         state.global_step += 1
         step_bar.update(1)
 
         fabric.log_dict(
-            {"train_loss": loss.item(), "epoch": state.epoch}, step=state.global_step
+            {
+                "train_loss": loss.item(),
+                "epoch": state.epoch,
+                "lr": state.optimizer.state_dict["lr"],
+            },
+            step=state.global_step,
         )
 
         if state.global_step % val_interval == 0:
@@ -140,7 +147,7 @@ def main(cfg: DictConfig) -> None:
 
     # --- Tokenizer and Sampler ---
     tokenizer = HFTokenizer(cfg.tokenizer.path, max_seq_len=cfg.model.max_seq_len)
-    sampler = TopKSampler(top_k=50, temperature=1.0)
+    sampler = instantiate(cfg.sampler)
 
     # --- Dataset and Collator ---
     collator = Collator(tokenizer)
@@ -188,6 +195,8 @@ def main(cfg: DictConfig) -> None:
             lr=cfg.hparams.optimizer.lr,
             weight_decay=cfg.hparams.optimizer.weight_decay,
         )
+        scheduler_factory = hydra.utils.instantiate(cfg.scheduler)
+        scheduler = scheduler_factory(optimizer=optimizer)
 
     logger.log_model(model)
     model, optimizer = fabric.setup(model, optimizer)
@@ -198,6 +207,7 @@ def main(cfg: DictConfig) -> None:
     train_state = AttributeDict(
         model=model,
         optimizer=optimizer,
+        scheduler=scheduler,
         global_step=0,
         epoch=0,
         cfg_dict=cfg_dict,
@@ -215,4 +225,5 @@ def main(cfg: DictConfig) -> None:
 
 if __name__ == "__main__":
     torch.set_float32_matmul_precision("high")
+    OmegaConf.register_new_resolver("eval", eval)  # allows math in hydra config
     main()

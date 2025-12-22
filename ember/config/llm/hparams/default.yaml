@@ -3,17 +3,25 @@ env:
   n_devices: 1 # int, list[int], str, -1 = all devices
   precision: "bf16-mixed" # 32, 16, bf16 / mixed (model params remain in 32), true (params are get cast)
 
-optimizer:
-  lr: 5e-4
-  weight_decay: 0.1
-
-# sampler: # TODO: add sampler to config with target
-
 train:
   epochs: 1
   gradient_clip_val: 1.0
-  max_steps: 7_000 
-  val_interval: 500
+  max_steps: 7_000
+  use_warmup: true
+  warmup_frac: 0.1 # number of warmup steps as a fraction of `max_steps` (only when using a scheduler with warmup)
+  val_interval: 500 # run evaluation step every `n` training steps
+
+optimizer:
+  lr: 1e-3
+  weight_decay: 0.1
+
+scheduler:
+  _target_: ember.llm.utils.scheduler.create_scheduler
+  _partial_: true
+  max_steps: ${hparams.train.max_steps}
+  warmup_frac: ${hparams.train.warmup_frac}
+  use_warmup: ${hparams.train.use_warmup}
+  scheduler_type: "cosine" # schedulers: ["cosine", "constant"]
 
 callbacks:
   generate:
@@ -25,7 +33,3 @@ data:
   n_val_samples: 512
   batch_size: 16
   target_batch_size: 64
-
-# scheduler:
-#   warmup_steps: 1e3
-#   max_steps: 5e4

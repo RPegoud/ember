@@ -2,6 +2,7 @@ defaults:
   - model: llama # models: [deepseek, llama]
   - tokenizer: gpt2 # tokenizers: [gpt2, llama3]
   - hparams: default
+  - sampler: minp # samplers: [minp, topk, nucleus]
   - _self_
 
 seed: 0
