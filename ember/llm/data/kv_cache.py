@@ -11,7 +11,7 @@ class KVCache:
         n_heads: int,
         head_dim: int,
         device: str,
-        dtype: torch.dtype = torch.bfloat16,
+        dtype: torch.dtype,
     ):
         """
         Parent Key-Value cache, distributed to attention modules via `LayerKVCache`.
@@ -28,14 +28,21 @@ class KVCache:
         self.max_seq_len = max_seq_len
         self.current_len = 0
 
-        self.k_cache = [
-            torch.zeros((max_batch_size, n_heads, max_seq_len, head_dim)).to(device)
-            for _ in range(n_layers)
-        ]
-        self.v_cache = [
-            torch.zeros((max_batch_size, n_heads, max_seq_len, head_dim)).to(device)
-            for _ in range(n_layers)
-        ]
+        # self.k_cache = [
+        #     torch.zeros((max_batch_size, n_heads, max_seq_len, head_dim)).to(device)
+        #     for _ in range(n_layers)
+        # ]
+        # self.v_cache = [
+        #     torch.zeros((max_batch_size, n_heads, max_seq_len, head_dim)).to(device)
+        #     for _ in range(n_layers)
+        # ]
+
+        self.k_cache = torch.zeros(
+            (n_layers, max_batch_size, n_heads, max_seq_len, head_dim), dtype=dtype
+        ).to(device)
+        self.v_cache = torch.zeros(
+            (n_layers, max_batch_size, n_heads, max_seq_len, head_dim), dtype=dtype
+        ).to(device)
 
     def store(
         self, k: torch.Tensor, v: torch.Tensor, layer_idx: int

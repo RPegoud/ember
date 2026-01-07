@@ -1,7 +1,7 @@
 env:
   accelerator: "auto" # [auto, cuda, cpu, gpu, tpu]
   n_devices: 1 # int, list[int], str, -1 = all devices
-  precision: "bf16-mixed" # 32, 16, bf16 / mixed (model params remain in 32), true (params are get cast)
+  precision: "bf16-mixed" # 32, 16, bf16 / mixed (model params remain in 32), true (params get cast)
 
 train:
   epochs: 1

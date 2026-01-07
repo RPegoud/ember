@@ -100,6 +100,7 @@ class Transformer(nn.Module):
             n_heads=cache_config["n_heads"],
             head_dim=cache_config["head_dim"],
             device=self.device,
+            dtype=indices.dtype,  # TODO: is this the right way to pass dtype?
         )
         finished = torch.zeros((B,), dtype=torch.bool, device=indices.device)
 
