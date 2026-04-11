@@ -39,11 +39,11 @@
     - [ ] (optional) Lightning indexer
 
 2. Triton/Helion Kernels (write pytests at each step)
-    - [ ] RMSNorm
+    - [x] RMSNorm
     - [ ] RoPE
     - [ ] SwiGLU
     - [ ] FlashAttention
-    - [ ] CrossEntropyLoss
+    - [x] Fused Linear Cross-Entropy
 
 
 3. Diffusion
@@ -56,7 +56,7 @@
     - [x] Custom typing
     - [ ] FLOPs wrapper (possibly w [Fabric](https://lightning.ai/docs/fabric/stable/api/utilities.html))
     - [x] Hydra config
-    - [] Sampler and Scheduler configs
+    - [x] Sampler and Scheduler configs
     - [x] wandb logging
     - [x] Push models to hf hub
     - [ ] Docstrings / Sphynx

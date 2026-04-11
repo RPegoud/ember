@@ -23,4 +23,5 @@ dependencies = [
     "transformers>=4.57.3",
     "wandb>=0.23.1",
     "triton; sys_platform == 'linux'",
+    "nbformat>=5.10.4",
 ]

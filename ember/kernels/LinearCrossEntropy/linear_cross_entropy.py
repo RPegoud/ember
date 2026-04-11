@@ -1,5 +1,3 @@
-import math
-
 import torch
 import triton
 import triton.language as tl
@@ -84,7 +82,7 @@ def linear_cross_entropy_fwd_kernel(
 
             X_tile = tl.load(X_ptr + tile_offs, mask=tile_mask, other=0.0)
             W_block = tl.load(W_block_ptr, boundary_check=(0, 1), padding_option="zero")
-            acc += tl.dot(X_tile[None, :], W_block)
+            acc += tl.dot(X_tile[None, :].to(tl.float32), W_block.to(tl.float32))
 
             W_block_ptr = W_block_ptr.advance((D_BLOCK, 0))
 
@@ -101,7 +99,7 @@ def linear_cross_entropy_fwd_kernel(
 
     # --- Backward Pass ---
 
-    # 1: Compute the normalised probabilities P
+    # 1: Compute the normalised activations P
     for v_idx in tl.range(0, V, V_BLOCK):
         W_block_ptr = tl.make_block_ptr(
             base=W_ptr,
@@ -127,6 +125,7 @@ def linear_cross_entropy_fwd_kernel(
         P_tile -= tl.where(
             v_idx + v_tile_offs == Y, 1, 0
         )  # subtract 1 when logit = label
+        P_tile.to(tl.float32)
 
         # 2: Compute the gradients:
         # dX = (P - Y) . W^T
@@ -149,16 +148,14 @@ def linear_cross_entropy_fwd_kernel(
                 W_T_block_ptr, boundary_check=(0, 1), padding_option="zero"
             )
 
-            dX_partial = tl.dot(P_tile, W_T_block).reshape(D_BLOCK)
-            tl.atomic_add(
-                pointer=dX_ptr + d_idx + d_tile_offs,
-                val=dX_partial,
-                sem="relaxed",  # the order of adds across threads does not matter
-            )
+            dX_partial = tl.dot(P_tile, W_T_block.to(tl.float32)).reshape(D_BLOCK)
+            tl.atomic_add(pointer=dX_ptr + d_idx + d_tile_offs, val=dX_partial)
 
             W_T_block_ptr = W_T_block_ptr.advance((0, D_BLOCK))
 
             # 2.2: Accumulate dW
+            # `atomic_add` is not compatible with block pointers,
+            # define the 2D pointer and mask manually
             dW_tile_ptr = dW_ptr + (
                 (d_idx + d_tile_offs)[:, None] * dW_row_stride
                 + (v_idx + v_tile_offs)[None, :] * dW_col_stride
@@ -171,6 +168,69 @@ def linear_cross_entropy_fwd_kernel(
             X_T_tile = tl.load(X_ptr + tile_offs, mask=tile_mask, other=0.0)[:, None]
 
             dW_partial = X_T_tile.to(tl.float32) * P_tile
-            tl.atomic_add(
-                pointer=dW_tile_ptr, val=dW_partial, mask=dW_mask, sem="relaxed"
-            )
+            tl.atomic_add(pointer=dW_tile_ptr, val=dW_partial, mask=dW_mask)
+
+
+class EmberLinearCrossEntropy(torch.autograd.Function):
+    @staticmethod
+    @ensure_contiguous
+    def linear_cross_entropy_fwd(
+        ctx,
+        X: torch.Tensor,
+        W: torch.Tensor,
+        Y: torch.Tensor,
+        D_BLOCK: int,
+        V_BLOCK: int,
+    ) -> torch.Tensor:
+        if X.dim() == 3:
+            X.reshape(-1, X.shape[2])
+
+        assert (
+            X.shape[1] == W.shape[0]
+        ), f"Dimension mismatch, expected {X.shape[1]=} to match {W.shape[0]}."
+
+        N, D = X.shape
+        _, V = W.shape
+        dX = torch.empty_like(X, device=X.device)
+        dW = torch.empty_like(W, device=X.device)
+        Loss = torch.empty(N, device=X.device)
+
+        linear_cross_entropy_fwd_kernel[(N,)](
+            X_ptr=X,
+            X_row_stride=X.stride(0),
+            W_ptr=W,
+            W_row_stride=W.stride(0),
+            W_col_stride=W.stride(1),
+            Y_ptr=Y,
+            dX_ptr=dX,
+            dX_row_stride=dX,
+            dW_ptr=dW,
+            dW_row_stride=dW,
+            dW_col_stride=dW,
+            Loss_ptr=Loss,
+            D=D,
+            V=V,
+            D_BLOCK=D_BLOCK,
+            V_BLOCK=V_BLOCK,
+            ignore_index=-100,
+        )
+
+        ctx.save_for_backward(dX, dW)
+
+        return Loss
+
+    @staticmethod
+    @ensure_contiguous
+    def linear_cross_entropy_bwd(
+        ctx, dX: torch.Tensor, dW: torch.Tensor
+    ) -> torch.Tensor:
+        # Ensure upstream gradients are 1.0 (i.e. this kernel is the last layer)
+        assert torch.equal(
+            dX, torch.tensor(1.0, device=dX.device)
+        ), f"Expected {dX=} to be equal to 1.0. Ensure the fused Linear Cross-Entropy kernel is used as last layer."
+        assert torch.equal(
+            dW, torch.tensor(1.0, device=dX.device)
+        ), f"Expected {dW=} to be equal to 1.0. Ensure the fused Linear Cross-Entropy kernel is used as last layer."
+
+        dX, dW = ctx.saved_tensors
+        return dX, dW
